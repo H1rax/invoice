@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Faktury</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <div class="title-block">
+        <h1>Přehled faktur</h1>
+        <p>Nahrajte fakturu, systém z ní vyčte údaje a zařadí ji do přehledu.</p>
+      </div>
+      <div class="header-actions">
+        <span class="count-badge tabular" id="countBadge">0 faktur</span>
+        <div class="user-badge">
+          <span>Přihlášen(a): <strong id="currentUser">–</strong></span>
+          <button class="btn ghost small" id="logoutBtn">Odhlásit se</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar card">
+        <h3>Složky</h3>
+        <div id="folderList"></div>
+        <form class="folder-add" id="folderAddForm">
+          <input type="text" id="folderNameInput" placeholder="Nová složka…" maxlength="60" />
+          <button class="btn" type="submit" title="Přidat složku">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </form>
+      </aside>
+
+      <div class="main-content">
+        <div class="dropzone card" id="dropzone">
+          <div class="upload-info">
+            <div class="upload-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            </div>
+            <div class="hint">
+              <strong>Přetáhněte faktury sem</strong>
+              <span>nebo klikněte na tlačítko — jde nahrát i víc najednou (PDF, PNG, JPG, WEBP)</span>
+            </div>
+          </div>
+          <div>
+            <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" multiple hidden />
+            <button class="btn" id="pickBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              Nahrát faktury
+            </button>
+          </div>
+        </div>
+
+        <div class="cards" id="cards"></div>
+
+        <div class="charts">
+          <div class="chart-card card">
+            <h3>Podle kategorie</h3>
+            <div id="chartCategory"></div>
+          </div>
+          <div class="chart-card card">
+            <h3>Podle měsíce</h3>
+            <div id="chartMonth"></div>
+          </div>
+          <div class="chart-card card">
+            <h3>Podle stavu</h3>
+            <div id="chartStatus"></div>
+          </div>
+        </div>
+
+        <div class="toolbar card">
+          <div class="search-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="fSearch" placeholder="Hledat dodavatele nebo číslo faktury..." />
+          </div>
+          <div class="filter-row">
+            <div class="filter-field">
+              <label for="fVendor">Dodavatel</label>
+              <select id="fVendor"><option value="">Všichni dodavatelé</option></select>
+            </div>
+            <div class="filter-field">
+              <label for="fCategory">Kategorie</label>
+              <div class="filter-field-inline">
+                <select id="fCategory"><option value="">Všechny kategorie</option></select>
+                <button class="icon-btn" id="manageCategoriesBtn" title="Spravovat kategorie">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.4 14.5-1.2-1.2a4.5 4.5 0 0 0 0-2.6l1.2-1.2-2-3.4-1.6.5a4.6 4.6 0 0 0-2.3-1.3L14 3h-4l-.5 1.7a4.6 4.6 0 0 0-2.3 1.3l-1.6-.5-2 3.4 1.2 1.2a4.5 4.5 0 0 0 0 2.6l-1.2 1.2 2 3.4 1.6-.5a4.6 4.6 0 0 0 2.3 1.3L10 21h4l.5-1.7a4.6 4.6 0 0 0 2.3-1.3l1.6.5Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="filter-field">
+              <label for="fStatus">Stav úhrady</label>
+              <select id="fStatus">
+                <option value="">Všechny stavy</option>
+                <option value="neuhrazeno">Neuhrazeno</option>
+                <option value="uhrazeno">Uhrazeno</option>
+                <option value="po splatnosti">Po splatnosti</option>
+              </select>
+            </div>
+            <div class="filter-actions">
+              <button class="btn ghost" id="fReset">Zrušit filtry</button>
+              <button class="btn ghost" id="openReportBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15v3M12 10v8M17 6v12"/></svg>
+                Report
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar">
+          <span class="count"><span id="bulkCount">0</span> vybráno</span>
+          <div class="spacer"></div>
+          <select id="bulkFolderSelect">
+            <option value="">Přesunout do složky…</option>
+          </select>
+          <button class="btn ghost small" id="bulkMarkPaid">Označit jako uhrazené</button>
+          <button class="btn ghost small" id="bulkMarkUnpaid">Označit jako neuhrazené</button>
+          <button class="btn danger ghost small" id="bulkDelete">Smazat</button>
+        </div>
+
+        <div class="table-card card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="checkbox-col"><input type="checkbox" id="selectAll" /></th>
+                  <th class="sortable" data-sort="vendor">Dodavatel<span class="sort-indicator"></span></th>
+                  <th>Číslo</th>
+                  <th class="sortable" data-sort="issue_date">Vystaveno<span class="sort-indicator"></span></th>
+                  <th class="sortable" data-sort="due_date">Splatnost<span class="sort-indicator"></span></th>
+                  <th class="sortable" data-sort="amount_total">Částka<span class="sort-indicator"></span></th>
+                  <th>Kategorie</th>
+                  <th>Stav</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="empty" id="emptyState" hidden>
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></svg>
+            </div>
+            Zatím žádné faktury. Nahrajte první výše.
+          </div>
+        </div>
+
+        <footer class="note">Faktury — lokální nástroj, data zůstávají u vás</footer>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <div class="overlay" id="drawerOverlay">
+    <div class="drawer" id="drawer">
+      <div class="drawer-header">
+        <div>
+          <h2 id="drawerVendor">Faktura</h2>
+          <div class="sub" id="drawerSub"></div>
+        </div>
+        <button class="icon-btn" id="drawerClose" aria-label="Zavřít">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <div class="field-grid">
+          <div class="field">
+            <label for="editVendor">Dodavatel</label>
+            <input type="text" id="editVendor" />
+          </div>
+          <div class="field">
+            <label for="editInvoiceNumber">Číslo faktury</label>
+            <input type="text" id="editInvoiceNumber" />
+          </div>
+          <div class="field">
+            <label for="editIssueDate">Vystaveno</label>
+            <input type="date" id="editIssueDate" />
+          </div>
+          <div class="field">
+            <label for="editDueDate">Splatnost</label>
+            <input type="date" id="editDueDate" />
+          </div>
+          <div class="field">
+            <label for="editAmount">Částka</label>
+            <input type="number" step="0.01" id="editAmount" />
+          </div>
+          <div class="field">
+            <label for="editCurrency">Měna</label>
+            <input type="text" id="editCurrency" />
+          </div>
+          <div class="field">
+            <label for="editCategory">Kategorie</label>
+            <select id="editCategory"></select>
+          </div>
+          <div class="field">
+            <label for="editStatus">Stav úhrady</label>
+            <select id="editStatus">
+              <option value="neuhrazeno">Neuhrazeno</option>
+              <option value="uhrazeno">Uhrazeno</option>
+            </select>
+          </div>
+          <div class="field span-2">
+            <label for="editFolder">Složka</label>
+            <select id="editFolder"></select>
+          </div>
+          <div class="field span-2">
+            <label for="editNotes">Poznámka</label>
+            <textarea id="editNotes" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div id="itemsSection" hidden>
+          <p class="section-title">Položky faktury</p>
+          <table class="items-table">
+            <thead><tr><th>Položka</th><th class="num">Množství</th><th class="num">Cena/ks</th><th class="num">Celkem</th></tr></thead>
+            <tbody id="drawerItems"></tbody>
+          </table>
+        </div>
+
+        <div class="save-indicator" id="drawerSaveStatus"></div>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn danger ghost" id="drawerDelete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+          Smazat fakturu
+        </button>
+        <a class="btn ghost" id="drawerFile" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/></svg>
+          Otevřít originál
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <h3 id="confirmTitle">Smazat fakturu?</h3>
+      <p id="confirmMessage"></p>
+      <div class="confirm-actions">
+        <button class="btn ghost" id="confirmCancel">Zrušit</button>
+        <button class="btn danger" id="confirmOk">Smazat</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-overlay" id="categoryOverlay">
+    <div class="confirm-box category-box">
+      <h3>Kategorie</h3>
+      <p>Kategorie, do kterých systém třídí vaše faktury.</p>
+      <div class="category-list" id="categoryList"></div>
+      <form class="category-add" id="categoryAddForm">
+        <input type="text" id="categoryNameInput" placeholder="Nová kategorie…" maxlength="40" />
+        <button class="btn" type="submit">Přidat</button>
+      </form>
+      <div class="confirm-actions" style="margin-top: 1.1rem;">
+        <button class="btn ghost" id="categoryCloseBtn">Zavřít</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-overlay" id="reportOverlay">
+    <div class="confirm-box report-box">
+      <div class="report-print-title" id="reportPrintTitle"></div>
+      <div class="no-print">
+        <h3>Report</h3>
+        <div class="report-controls">
+          <select id="reportYear"></select>
+          <select id="reportMonth">
+            <option value="">Celý rok</option>
+          </select>
+          <div class="spacer" style="flex:1"></div>
+          <button class="btn ghost small" id="reportPrintBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+            Tisk
+          </button>
+          <button class="btn ghost small" id="reportCloseBtn">Zavřít</button>
+        </div>
+      </div>
+      <div id="reportContent"></div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
